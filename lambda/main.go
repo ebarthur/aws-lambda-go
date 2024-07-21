@@ -1,27 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"lambda-func/app"
+	"lambda-func/middleware"
 	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 )
-
-type MyEvent struct {
-	Username string `json:"username"`
-}
-
-// Take in a payload and do something with it
-func HandleRequest(event MyEvent) (string, error) {
-	if event.Username == "" {
-		return "", fmt.Errorf("username cannot be empty")
-	}
-
-	return fmt.Sprintf("Successfully called by - %s", event.Username), nil
-}
-
 func main() {
 	myapp := app.NewApp()
 	lambda.Start(func(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
@@ -30,6 +16,8 @@ func main() {
 			return myapp.ApiHandler.RegisterUserHandler(request)
 		case "/login":
 			return myapp.ApiHandler.LoginUserHandler(request)
+		case "/protected":
+			return middleware.ValidateJWTMiddleware(ProtectedHandler)(request)
 		default:
 			return events.APIGatewayProxyResponse{
 				StatusCode: http.StatusNotFound,
@@ -37,4 +25,10 @@ func main() {
 			}, nil
 		}
 	})
+}
+func ProtectedHandler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	return events.APIGatewayProxyResponse{
+		StatusCode: http.StatusOK,
+		Body:       "Protected",
+	}, nil
 }

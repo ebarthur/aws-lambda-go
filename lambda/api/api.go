@@ -114,8 +114,22 @@ func (api ApiHandler) LoginUserHandler(request events.APIGatewayProxyRequest) (e
 		}, err
 	}
 
+	accessToken := types.CreateToken(user)
+
+	messageBytes, err := json.Marshal(map[string]string{
+		"token":   accessToken,
+		"message": "Successfully logged in",
+	})
+	if err != nil {
+		return events.APIGatewayProxyResponse{
+			StatusCode: http.StatusInternalServerError,
+			Body:       "Internal server error",
+		}, err
+	}
+	successMessage := string(messageBytes)
+
 	return events.APIGatewayProxyResponse{
 		StatusCode: http.StatusOK,
-		Body:       "Successfully logged in",
+		Body:       successMessage,
 	}, nil
 }
