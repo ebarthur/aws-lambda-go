@@ -15,7 +15,7 @@ func NewApp() App {
 	db := database.NewDynamoDBClient()
 	apiHandler := api.NewApiHandler(db)
 
-	return App {
+	return App{
 		ApiHandler: apiHandler,
 	}
 }
