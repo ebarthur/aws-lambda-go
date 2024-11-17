@@ -3,11 +3,13 @@ package main
 import (
 	"lambda-func/app"
 	"lambda-func/middleware"
+	"lambda-func/types"
 	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 )
+
 func main() {
 	myapp := app.NewApp()
 	lambda.Start(func(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
@@ -27,8 +29,5 @@ func main() {
 	})
 }
 func ProtectedHandler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	return events.APIGatewayProxyResponse{
-		StatusCode: http.StatusOK,
-		Body:       "Protected",
-	}, nil
+	return types.ErrorResponse(http.StatusOK, "Protected"), nil
 }

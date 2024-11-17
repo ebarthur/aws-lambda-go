@@ -25,54 +25,34 @@ func (api ApiHandler) RegisterUserHandler(request events.APIGatewayProxyRequest)
 
 	err := json.Unmarshal([]byte(request.Body), &registerUser)
 	if err != nil {
-		return events.APIGatewayProxyResponse{
-			StatusCode: http.StatusBadRequest,
-			Body:       "Invalid request payload",
-		}, err
+		return types.ErrorResponse(http.StatusBadRequest, "Invalid request payload"), err
 	}
 
 	if registerUser.Username == "" || registerUser.Password == "" {
-		return events.APIGatewayProxyResponse{
-			StatusCode: http.StatusBadRequest,
-			Body:       "Invalid request - fields empty",
-		}, err
+		return types.ErrorResponse(http.StatusBadRequest, "Invalid request - fields empty"), err
 	}
 
 	userExists, err := api.dbStore.DoesUserExist(registerUser.Username)
 	if err != nil {
-		return events.APIGatewayProxyResponse{
-			StatusCode: http.StatusInternalServerError,
-			Body:       "Internal server error",
-		}, err
+		return types.ErrorResponse(http.StatusInternalServerError, "Internal server error"), err
+
 	}
 
 	if userExists {
-		return events.APIGatewayProxyResponse{
-			StatusCode: http.StatusConflict,
-			Body:       "user already exists",
-		}, err
+		return types.ErrorResponse(http.StatusConflict, "user already exists"), err
 	}
 
 	user, err := types.NewUser(registerUser)
 	if err != nil {
-		return events.APIGatewayProxyResponse{
-			StatusCode: http.StatusInternalServerError,
-			Body:       "Internal server error",
-		}, fmt.Errorf("could not create user %w", err)
+		return types.ErrorResponse(http.StatusInternalServerError, "Internal server error"), fmt.Errorf("could not create user: %w", err)
 	}
 
 	err = api.dbStore.InsertUser(user)
 	if err != nil {
-		return events.APIGatewayProxyResponse{
-			StatusCode: http.StatusInternalServerError,
-			Body:       "Internal server error",
-		}, err
+		return types.ErrorResponse(http.StatusInternalServerError, "Internal server error"), err
 	}
 
-	return events.APIGatewayProxyResponse{
-		StatusCode: http.StatusCreated,
-		Body:       "Successfuly registered user",
-	}, nil
+	return types.ErrorResponse(http.StatusCreated, "Successfully registered user"), nil
 }
 
 func (api ApiHandler) LoginUserHandler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
@@ -86,32 +66,20 @@ func (api ApiHandler) LoginUserHandler(request events.APIGatewayProxyRequest) (e
 
 	err := json.Unmarshal([]byte(request.Body), &loginRequest)
 	if err != nil {
-		return events.APIGatewayProxyResponse{
-			StatusCode: http.StatusBadRequest,
-			Body:       "Invalid request payload",
-		}, err
+		return types.ErrorResponse(http.StatusBadRequest, "Invalid request payload"), err
 	}
 
 	if loginRequest.Username == "" || loginRequest.Password == "" {
-		return events.APIGatewayProxyResponse{
-			StatusCode: http.StatusBadRequest,
-			Body:       "Invalid request - fields empty",
-		}, err
+		return types.ErrorResponse(http.StatusBadRequest, "Invalid request - fields empty"), err
 	}
 
 	user, err := api.dbStore.GetUser(loginRequest.Username)
 	if err != nil {
-		return events.APIGatewayProxyResponse{
-			StatusCode: http.StatusNotFound,
-			Body:       "User not found",
-		}, err
+		return types.ErrorResponse(http.StatusNotFound, "user not found"), err
 	}
 
 	if !types.ValidatePassword(user.HashPassword, loginRequest.Password) {
-		return events.APIGatewayProxyResponse{
-			StatusCode: http.StatusBadRequest,
-			Body:       "Invalid user credentials",
-		}, err
+		return types.ErrorResponse(http.StatusBadRequest, "Invalid user credentials"), err
 	}
 
 	accessToken := types.CreateToken(user)
@@ -121,15 +89,9 @@ func (api ApiHandler) LoginUserHandler(request events.APIGatewayProxyRequest) (e
 		"message": "Successfully logged in",
 	})
 	if err != nil {
-		return events.APIGatewayProxyResponse{
-			StatusCode: http.StatusInternalServerError,
-			Body:       "Internal server error",
-		}, err
+		return types.ErrorResponse(http.StatusInternalServerError, "Internal server error"), err
 	}
 	successMessage := string(messageBytes)
 
-	return events.APIGatewayProxyResponse{
-		StatusCode: http.StatusOK,
-		Body:       successMessage,
-	}, nil
+	return types.ErrorResponse(http.StatusOK, successMessage), nil
 }

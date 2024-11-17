@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/aws/aws-lambda-go/events"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -39,7 +40,7 @@ func ValidatePassword(hashPassword, plainTextPassword string) bool {
 func CreateToken(user User) string {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub":    user.Username,
-		"expiry": time.Now().Add(time.Hour * 24 * 30).Unix(),
+		"expiry": time.Now().Add(time.Hour * 24 * 30).Unix(), // 30 days
 	})
 
 	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
@@ -50,4 +51,11 @@ func CreateToken(user User) string {
 	}
 
 	return tokenString
+}
+
+func ErrorResponse(statusCode int, message string) events.APIGatewayProxyResponse {
+	return events.APIGatewayProxyResponse{
+		StatusCode: statusCode,
+		Body:       message,
+	}
 }

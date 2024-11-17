@@ -36,7 +36,6 @@ func NewGoCdkStack(scope constructs.Construct, id string, props *GoCdkStackProps
 		Handler: jsii.String("main"),
 	})
 
-
 	api := awsapigateway.NewRestApi(stack, jsii.String("myApi"), &awsapigateway.RestApiProps{
 		DefaultCorsPreflightOptions: &awsapigateway.CorsOptions{
 			AllowOrigins: awsapigateway.Cors_ALL_ORIGINS(),
